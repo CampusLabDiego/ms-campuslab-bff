@@ -1,21 +1,27 @@
 spring:
+
   application:
     name: ms-campuslab-bff
 
+
   cloud:
+
     gateway:
+
       routes:
 
         - id: catalog-service
-          uri: http://catalog:8081
+          uri: ${CATALOG_URL:http://catalog:8081}
           predicates:
             - Path=/api/catalog/**
 
+
         - id: bookings-service
-          uri: http://bookings:8082
+          uri: ${BOOKINGS_URL:http://bookings:8082}
           predicates:
             - Path=/api/bookings/**
 
 
 server:
+
   port: 8080
