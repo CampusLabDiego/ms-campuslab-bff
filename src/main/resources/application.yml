@@ -24,7 +24,7 @@ spring:
         - id: notifier-service
           uri: ${NOTIFIER_URL:http://notifier:8083}
           predicates:
-            - Path=/api/notifications,/api/notifications/**
+            - Path=/api/notifications,/api/notifications/**,/api/audit,/api/audit/**
 
         - id: rabbit-admin-service
           uri: ${RABBIT_ADMIN_URL:http://rabbit-admin:8084}
