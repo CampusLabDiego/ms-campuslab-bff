@@ -37,8 +37,7 @@ public class SecurityConfig {
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(
             ServerHttpSecurity http,
-            CorsConfigurationSource corsConfigurationSource
-    ) {
+            CorsConfigurationSource corsConfigurationSource) {
 
         JwtGrantedAuthoritiesConverter rolesConverter =
                 new JwtGrantedAuthoritiesConverter();
@@ -49,8 +48,8 @@ public class SecurityConfig {
         JwtAuthenticationConverter authenticationConverter =
                 new JwtAuthenticationConverter();
 
-        authenticationConverter
-                .setJwtGrantedAuthoritiesConverter(rolesConverter);
+        authenticationConverter.setJwtGrantedAuthoritiesConverter(
+                rolesConverter);
 
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -59,79 +58,72 @@ public class SecurityConfig {
                 .logout(ServerHttpSecurity.LogoutSpec::disable)
 
                 .securityContextRepository(
-                        NoOpServerSecurityContextRepository.getInstance()
-                )
+                        NoOpServerSecurityContextRepository.getInstance())
 
                 .requestCache(cache -> cache.requestCache(
-                        NoOpServerRequestCache.getInstance()
-                ))
+                        NoOpServerRequestCache.getInstance()))
 
                 .cors(cors -> cors.configurationSource(
-                        corsConfigurationSource
-                ))
+                        corsConfigurationSource))
 
                 .authorizeExchange(auth -> auth
 
                         .pathMatchers(
                                 HttpMethod.OPTIONS,
-                                "/**"
-                        )
+                                "/**")
                         .permitAll()
 
                         .pathMatchers(
                                 "/api/admin",
-                                "/api/admin/**"
-                        )
+                                "/api/admin/**")
                         .hasRole("Admin")
 
                         .pathMatchers(
                                 "/api/report",
-                                "/api/report/**"
-                        )
+                                "/api/report/**")
                         .hasRole("Admin")
 
                         .pathMatchers(
                                 "/api/audit",
-                                "/api/audit/**"
-                        )
+                                "/api/audit/**")
                         .hasAnyRole("Admin", "Auditor")
 
                         .pathMatchers(
                                 HttpMethod.GET,
+                                "/api/notifications",
+                                "/api/notifications/**")
+                        .hasAnyRole("Admin", "Operador", "Cliente")
+
+                        .pathMatchers(
+                                HttpMethod.GET,
                                 "/api/catalog",
-                                "/api/catalog/**"
-                        )
+                                "/api/catalog/**")
                         .hasAnyRole("Admin", "Operador", "Cliente")
 
                         .pathMatchers(
                                 "/api/catalog",
-                                "/api/catalog/**"
-                        )
+                                "/api/catalog/**")
                         .hasRole("Admin")
 
                         .pathMatchers(
                                 HttpMethod.GET,
                                 "/api/bookings",
-                                "/api/bookings/**"
-                        )
+                                "/api/bookings/**")
                         .hasAnyRole("Admin", "Operador", "Cliente")
 
                         .pathMatchers(
                                 HttpMethod.POST,
-                                "/api/bookings"
-                        )
+                                "/api/bookings")
                         .hasAnyRole("Admin", "Operador", "Cliente")
 
                         .pathMatchers(
                                 HttpMethod.POST,
-                                "/api/bookings/*/arrival"
-                        )
+                                "/api/bookings/*/arrival")
                         .hasRole("Cliente")
 
                         .pathMatchers(
                                 "/api/bookings",
-                                "/api/bookings/**"
-                        )
+                                "/api/bookings/**")
                         .hasAnyRole("Admin", "Operador")
 
                         .anyExchange()
@@ -141,10 +133,7 @@ public class SecurityConfig {
                 .oauth2ResourceServer(oauth -> oauth
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(
                                 new ReactiveJwtAuthenticationConverterAdapter(
-                                        authenticationConverter
-                                )
-                        ))
-                )
+                                        authenticationConverter))))
 
                 .build();
     }
@@ -153,10 +142,8 @@ public class SecurityConfig {
     public ReactiveJwtDecoder jwtDecoder(
             @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
             String issuer,
-
             @Value("${campuslab.security.audience}")
-            String audience
-    ) {
+            String audience) {
 
         NimbusReactiveJwtDecoder decoder =
                 NimbusReactiveJwtDecoder
@@ -167,32 +154,26 @@ public class SecurityConfig {
                 new JwtClaimValidator<>(
                         "aud",
                         audiences -> audiences != null
-                                && audiences.contains(audience)
-                );
+                                && audiences.contains(audience));
 
         JwtClaimValidator<String> scopeValidator =
                 new JwtClaimValidator<>(
                         "scp",
                         scopes -> scopes != null
-                                && Arrays.asList(
-                                        scopes.split("\\s+")
-                                ).contains("access_as_user")
-                );
+                                && Arrays.asList(scopes.split("\\s+"))
+                                        .contains("access_as_user"));
 
         JwtClaimValidator<Object> expirationRequired =
                 new JwtClaimValidator<>(
                         "exp",
-                        value -> value != null
-                );
+                        value -> value != null);
 
         decoder.setJwtValidator(
                 new DelegatingOAuth2TokenValidator<Jwt>(
                         JwtValidators.createDefaultWithIssuer(issuer),
                         audienceValidator,
                         scopeValidator,
-                        expirationRequired
-                )
-        );
+                        expirationRequired));
 
         return decoder;
     }
@@ -200,8 +181,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
             @Value("${campuslab.security.allowed-origins:http://localhost:4200}")
-            String allowedOrigins
-    ) {
+            String allowedOrigins) {
 
         CorsConfiguration configuration =
                 new CorsConfiguration();
@@ -209,8 +189,7 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(
                 Arrays.stream(allowedOrigins.split(","))
                         .map(String::trim)
-                        .toList()
-        );
+                        .toList());
 
         configuration.setAllowedMethods(
                 List.of(
@@ -219,25 +198,20 @@ public class SecurityConfig {
                         "PUT",
                         "PATCH",
                         "DELETE",
-                        "OPTIONS"
-                )
-        );
+                        "OPTIONS"));
 
         configuration.setAllowedHeaders(
                 List.of(
                         "Authorization",
                         "Content-Type",
-                        "Accept"
-                )
-        );
+                        "Accept"));
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration(
                 "/**",
-                configuration
-        );
+                configuration);
 
         return source;
     }

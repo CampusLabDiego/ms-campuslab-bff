@@ -21,6 +21,11 @@ spring:
           predicates:
             - Path=/api/bookings/**
 
+        - id: notifier-service
+          uri: ${NOTIFIER_URL:http://notifier:8083}
+          predicates:
+            - Path=/api/notifications,/api/notifications/**
+
 server:
   port: 8080
 
