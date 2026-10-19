@@ -26,6 +26,11 @@ spring:
           predicates:
             - Path=/api/notifications,/api/notifications/**
 
+        - id: rabbit-admin-service
+          uri: ${RABBIT_ADMIN_URL:http://rabbit-admin:8084}
+          predicates:
+            - Path=/api/admin,/api/admin/**
+
 server:
   port: 8080
 
