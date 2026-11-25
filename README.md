@@ -1,79 +1,75 @@
 # BFF CampusLab
 
-Gateway Spring Boot que recibe las peticiones de API Gateway,
-valida el Access Token y enruta hacia los microservicios.
+Backend for Frontend de CampusLab. Recibe las solicitudes de API Gateway, valida los tokens y enruta las llamadas a los microservicios internos.
 
 ## Tecnologías
 
 - Java 21.
-- Spring Boot 3.3.5.
+- Spring Boot.
 - Spring Cloud Gateway.
 - Spring Security OAuth2 Resource Server.
 - Maven y Docker.
 
 ## Responsabilidades
 
-- Validar firma, issuer, audience y vigencia del JWT.
-- Exigir el scope access_as_user.
-- Convertir el claim roles en autoridades ROLE_*.
+- Validar la firma, el emisor, la audiencia y la vigencia del Access Token.
+- Exigir el scope configurado para la API.
+- Convertir los roles del token en autoridades de Spring Security.
 - Aplicar autorización por rol.
 - Gestionar CORS.
-- Enrutar solicitudes a los servicios correspondientes.
+- Enrutar solicitudes a los microservicios.
 
-El BFF no se conecta a la base de datos.
+El BFF no utiliza una base de datos.
 
-## Rutas
+## Enrutamiento
 
 | Prefijo | Destino |
 |---|---|
-| /api/catalog | Catálogo |
-| /api/bookings | Reservas |
-| /api/notifications | Notifier |
-| /api/audit | Notifier |
-| /api/admin | Administrador RabbitMQ |
+| `/api/catalog` | Microservicio de catálogo |
+| `/api/bookings` | Microservicio de reservas |
+| `/api/notifications` | Microservicio notifier |
+| `/api/audit` | Microservicio notifier |
+| `/api/admin` | Microservicio de administración RabbitMQ y Kafka |
 
-## Variables de entorno
+Las rutas de administración de Kafka y RabbitMQ se encuentran bajo `/api/admin` y requieren el rol autorizado.
 
-| Variable | Destino habitual en Docker |
-|---|---|
-| CATALOG_URL | http://catalog:8081 |
-| BOOKINGS_URL | http://bookings:8082 |
-| NOTIFIER_URL | http://notifier:8083 |
-| RABBIT_ADMIN_URL | http://rabbit-admin:8084 |
+## Autorización
 
-La propiedad campuslab.security.allowed-origins define los orígenes
-permitidos. En el despliegue se configura mediante
-SPRING_APPLICATION_JSON desde Docker Compose.
+- Administración de RabbitMQ y Kafka: Admin.
+- Consulta de auditoría: Admin o Auditor.
+- Administración del catálogo: Admin.
+- Gestión de estados de reserva: Admin u Operador, según la operación.
+- Confirmación de llegada: Cliente propietario de la reserva, sujeto a las reglas del servicio.
 
-Orígenes utilizados:
+Las solicitudes `OPTIONS` se permiten para atender las solicitudes preflight de CORS.
 
-- http://localhost:4200
-- https://wktaaga6j4.execute-api.us-east-1.amazonaws.com
+La seguridad también se valida en los microservicios; el BFF no reemplaza las validaciones de propiedad ni las reglas de negocio.
 
-## Seguridad
+## Configuración
 
-- Administración RabbitMQ: Admin.
-- Auditoría: Admin o Auditor.
-- Escritura de catálogo: Admin.
-- Gestión de estados de reservas: Admin u Operador.
-- Confirmación de llegada: Cliente; el servicio valida la propiedad.
-- Consultas y creación de reservas: roles autorizados del sistema.
+Variables principales:
 
-Las solicitudes OPTIONS están permitidas para atender el preflight.
+```text
+CATALOG_URL
+BOOKINGS_URL
+NOTIFIER_URL
+RABBIT_ADMIN_URL
+```
+
+Orígenes permitidos se configuran mediante la propiedad de seguridad del servicio o `SPRING_APPLICATION_JSON` en Docker Compose.
+
+Los valores de producción deben configurarse en el entorno y no guardarse como secretos en el repositorio.
 
 ## Compilación
 
-En PowerShell:
+En PowerShell, desde la carpeta del repositorio:
 
 ```powershell
 .\mvnw.cmd clean package -DskipTests
 ```
 
-Este comando compila y empaqueta; omite la ejecución de pruebas.
+Este comando compila y empaqueta el servicio, pero omite la ejecución de pruebas.
 
-## Ejecución
+## Despliegue
 
-Puerto: 8080.
-
-El servicio se despliega mediante el Compose de infra-campuslab.
-API Gateway mantiene su integración de backend hacia este puerto.
+El BFF se ejecuta en el puerto `8080` mediante Docker Compose en `infra-campuslab`. API Gateway integra las rutas de API con este servicio.
